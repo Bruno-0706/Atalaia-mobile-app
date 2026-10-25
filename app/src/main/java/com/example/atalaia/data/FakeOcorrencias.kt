@@ -7,7 +7,7 @@ import com.example.atalaia.domain.Tags
 object FakeOcorrencias {
 
 
-    val ocorrencias = listOf(
+    val ocorrencias = mutableListOf(
 
         Ocorrencia(1, "teste", "teste", tags = listOf(Tags.ALAGAMENTO)),
         Ocorrencia(2, "test2", "testee", tags = listOf(Tags.ILUMINACAO)),
