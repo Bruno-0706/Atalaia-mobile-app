@@ -19,4 +19,10 @@ object Tags {
         nome = "Alagamento",
         descricao = "Áreas com acúmulo de água que dificultam a passagem."
     )
+
+    val todas = listOf(
+        INFRAESTRUTURA,
+        ILUMINACAO,
+        ALAGAMENTO
+    )
 }

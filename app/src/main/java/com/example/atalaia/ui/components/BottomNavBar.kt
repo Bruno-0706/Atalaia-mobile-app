@@ -29,7 +29,7 @@ fun BottomNavBar(navController: NavController) {
         NavigationBarItem(
             selected = false,
             onClick = {
-                // Ação de criar ocorrência será implementada depois.
+                navController.navigate(Route.CreateOccurrence.route)
             },
             icon = {
                 Icon(

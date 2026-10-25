@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.atalaia.ui.components.BottomNavBar
+import com.example.atalaia.ui.screens.CreateOccurrenceScreen
 import com.example.atalaia.ui.screens.DangerProtocolsScreen
 import com.example.atalaia.ui.screens.DangerReportsScreen
 
@@ -42,6 +43,10 @@ fun MainNavHost() {
 
             composable(Route.DangerProtocols.route) {
                 DangerProtocolsScreen(navController = navController)
+            }
+
+            composable(Route.CreateOccurrence.route) {
+                CreateOccurrenceScreen(navController)
             }
         }
     }
