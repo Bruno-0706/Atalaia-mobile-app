@@ -16,6 +16,7 @@ import com.example.atalaia.ui.components.BottomNavBar
 import com.example.atalaia.ui.screens.CreateOccurrenceScreen
 import com.example.atalaia.ui.screens.DangerProtocolsScreen
 import com.example.atalaia.ui.screens.DangerReportsScreen
+import com.example.atalaia.ui.screens.MapScreen
 
 @Composable
 fun MainNavHost() {
@@ -34,7 +35,7 @@ fun MainNavHost() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Route.Map.route) {
-                PlaceholderScreen("Mapa")
+                MapScreen()
             }
 
             composable(Route.DangerReports.route) {

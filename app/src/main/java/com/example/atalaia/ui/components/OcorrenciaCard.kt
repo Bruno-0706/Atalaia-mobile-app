@@ -18,7 +18,10 @@ fun OcorrenciaCard(ocorrencia: Ocorrencia) {
         Column(modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(text = ocorrencia.titulo, style = MaterialTheme.typography.titleMedium)
-            Text(text = ocorrencia.localizacao)
+            Text(text = ocorrencia.localizacao?.let { localizacao ->
+                "Latitude: ${localizacao.latitude}\n" +
+                        "Longitude: ${localizacao.longitude}"
+            } ?: "Localização não informada")
 
             ocorrencia.tags.forEach {
                 tag -> Card {
