@@ -23,7 +23,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
-import com.example.atalaia.data.FakeOcorrencias
 import com.example.atalaia.domain.Ocorrencia
 import com.example.atalaia.domain.Tag
 import com.example.atalaia.domain.Tags
@@ -32,11 +31,14 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.CancellationTokenSource
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.atalaia.ui.viewmodel.CreateOccurrenceViewModel
 
 @Composable
 fun CreateOccurrenceScreen(navController: NavHostController) {
 
     val context = LocalContext.current
+    val createOccurrenceViewModel: CreateOccurrenceViewModel = viewModel()
 
     var titulo by remember { mutableStateOf("") }
     var localizacao by remember { mutableStateOf<LatLng?>(null) }
@@ -174,22 +176,20 @@ fun CreateOccurrenceScreen(navController: NavHostController) {
             onClick = {
                 val posicao = localizacao
 
-                if (titulo.isNotBlank() && posicao != null) {
-
-                    val novaOcorrencia = Ocorrencia(
-                        id = FakeOcorrencias.ocorrencias.size + 1,
-                        titulo = titulo.trim(),
+                if (posicao != null) {
+                    val registrada = createOccurrenceViewModel.registrarOcorrencia(
+                        titulo = titulo,
                         localizacao = posicao,
                         tags = tagsSelecionadas.toList()
                     )
 
-                    FakeOcorrencias.ocorrencias.add(novaOcorrencia)
-
-                    navController.navigate(Route.Map.route) {
-                        popUpTo(Route.Map.route) {
-                            inclusive = false
+                    if (registrada) {
+                        navController.navigate(Route.Map.route) {
+                            popUpTo(Route.Map.route) {
+                                inclusive = false
+                            }
+                            launchSingleTop = true
                         }
-                        launchSingleTop = true
                     }
                 }
             },

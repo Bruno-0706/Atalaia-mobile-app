@@ -20,7 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.example.atalaia.data.FakeOcorrencias
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
+import com.example.atalaia.ui.viewmodel.OcorrenciaViewModel
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -35,6 +38,15 @@ import com.google.maps.android.compose.rememberMarkerState
 fun MapScreen() {
 
     val context = LocalContext.current
+
+    val ocorrenciaViewModel: OcorrenciaViewModel = viewModel()
+
+    val ocorrencias by ocorrenciaViewModel.ocorrencias.collectAsState()
+
+    LaunchedEffect(Unit) {
+        ocorrenciaViewModel.carregarOcorrencias()
+    }
+
 
     var hasLocationPermission by remember(context) {
         mutableStateOf(
@@ -78,7 +90,7 @@ fun MapScreen() {
             )
         ) {
 
-            FakeOcorrencias.ocorrencias.forEach { ocorrencia ->
+            ocorrencias.forEach { ocorrencia ->
 
                 ocorrencia.localizacao?.let { posicao ->
                 key(ocorrencia.id) {
