@@ -57,4 +57,6 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:20.0.0")
     implementation("com.google.android.gms:play-services-location:21.4.0")
     implementation("com.google.maps.android:maps-compose:9.0.0")
+    // Bullshitagens de viewmodel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
 }
