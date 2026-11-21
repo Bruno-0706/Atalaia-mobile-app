@@ -2,13 +2,16 @@ package com.example.atalaia.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.example.atalaia.data.repository.OcorrenciaRepository
+import com.example.atalaia.data.repository.UsuarioRepository
 import com.example.atalaia.domain.Ocorrencia
 import com.example.atalaia.domain.Tag
 import com.google.android.gms.maps.model.LatLng
+import java.util.UUID
 
-class CreateOccurrenceViewModel : ViewModel() {
-
-    private val repository = OcorrenciaRepository()
+class CreateOccurrenceViewModel(
+    private val repository: OcorrenciaRepository = OcorrenciaRepository(),
+    private val usuarioRepository: UsuarioRepository = UsuarioRepository()
+) : ViewModel() {
 
     fun registrarOcorrencia(
         titulo: String,
@@ -20,14 +23,19 @@ class CreateOccurrenceViewModel : ViewModel() {
             return false
         }
 
-        val proximoId = (repository.obterTodas()
-            .maxOfOrNull { it.id } ?: 0) + 1
+        // Obter o identificador do usuário autenticado
+        val usuarioId = usuarioRepository.usuarioAtual()?.uid
+            ?: return false
+
+        // Gerar um identificador textual único
+        val novoId = UUID.randomUUID().toString()
 
         val novaOcorrencia = Ocorrencia(
-            id = proximoId,
+            id = novoId,
             titulo = titulo.trim(),
             localizacao = localizacao,
-            tags = tags
+            usuarioId = usuarioId,
+            tagIds = tags.map { it.id }
         )
 
         repository.adicionar(novaOcorrencia)

@@ -1,7 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.services)
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+    //id("com.google.gms.google-services") NÃO.
 }
 
 android {
@@ -44,6 +46,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    //implementation(libs.firebase.firestore.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
@@ -59,4 +63,8 @@ dependencies {
     implementation("com.google.maps.android:maps-compose:9.0.0")
     // Bullshitagens de viewmodel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
+    //implementation(platform("com.google.firebase:firebase-bom:35.2.0"))
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
 }

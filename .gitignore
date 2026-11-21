@@ -1,4 +1,3 @@
-
 # Configurações locais do Android SDK
 local.properties
 
@@ -28,3 +27,6 @@ captures/
 *.keystore
 .env
 .env.*
+
+# Google stuff
+/app/google-services.json
