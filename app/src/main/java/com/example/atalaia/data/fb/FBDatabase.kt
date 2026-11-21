@@ -1,8 +1,9 @@
+
 package com.example.atalaia.data.fb
 
 import com.example.atalaia.domain.Ocorrencia
-import com.example.atalaia.data.fb.FBOcorrencia
 import com.example.atalaia.domain.toOcorrencia
+
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
@@ -10,38 +11,36 @@ import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 
-/*
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.DocumentChange
- */
 
 class FBDatabase {
-
-    //interface de listener (paradigma do observador, lembra o js)
-    interface Listener {
-        //relacionando ao login do user
-        fun onUserLoaded(uid: String, user: FBUsuario)
-        fun onUserSignOut()
-        fun onRegisterSuccess(uid: String)
-
+    interface OcorrenciaListener {
         //relacionando ações na ocorrencia
         fun onOcorrenciaAdded(ocorrencia: Ocorrencia)
         fun onOcorrenciaUpdated(ocorrencia: Ocorrencia)
         fun onOcorrenciaRemoved(ocorrencia: Ocorrencia)
         //erro
-        fun onError(exception : Exception)
+        fun onError(exception: Exception)
+    }
+
+    interface AuthListener {
+        //relacionando ao login do user
+        fun onUserLoaded(uid: String, user: FBUsuario)
+        fun onUserSignOut()
+        fun onRegisterSuccess(uid: String)
+        //erro
+        fun onError(exception: Exception)
     }
 
     //Acessando o firestore, fazer isso depois de ter o banco
     private val auth = Firebase.auth
     private val banco = Firebase.firestore
     private var ocorrenciasListReg: ListenerRegistration? = null
-    private var listener: Listener? = null
+
+    private var authCallBack: AuthListener? = null
+    private var ocorrenciaCallback: OcorrenciaListener? = null
+
     private var authListenerRegistered = false
+
     private val authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
         // Verifica se existe usuário autenticado
         val usuarioAtual = firebaseAuth.currentUser
@@ -50,7 +49,7 @@ class FBDatabase {
             ocorrenciasListReg?.remove()
             ocorrenciasListReg = null
 
-            listener?.onUserSignOut()
+            authCallBack?.onUserSignOut()
             return@AuthStateListener
         }
 
@@ -61,13 +60,13 @@ class FBDatabase {
         refUsuario.get()
             .addOnSuccessListener { documento ->
                 documento.toObject(FBUsuario::class.java)?.let { usuario ->
-                    listener?.onUserLoaded(usuarioAtual.uid, usuario)
-                } ?: listener?.onError(
+                    authCallBack?.onUserLoaded(usuarioAtual.uid, usuario)
+                } ?: authCallBack?.onError(
                     Exception("Perfil do usuário não encontrado.")
                 )
             }
             .addOnFailureListener { erro ->
-                listener?.onError(erro)
+                authCallBack?.onError(erro)
             }
 
         // Observa alterações na coleção de ocorrências
@@ -77,7 +76,7 @@ class FBDatabase {
             .addSnapshotListener { snapshots, erro ->
 
                 if (erro != null) {
-                    listener?.onError(erro)
+                    ocorrenciaCallback?.onError(erro)
                     return@addSnapshotListener
                 }
 
@@ -89,25 +88,29 @@ class FBDatabase {
 
                     when (change.type) {
                         DocumentChange.Type.ADDED ->
-                            listener?.onOcorrenciaAdded(ocorrencia)
+                            ocorrenciaCallback?.onOcorrenciaAdded(ocorrencia)
 
                         DocumentChange.Type.MODIFIED ->
-                            listener?.onOcorrenciaUpdated(ocorrencia)
+                            ocorrenciaCallback?.onOcorrenciaUpdated(ocorrencia)
 
                         DocumentChange.Type.REMOVED ->
-                            listener?.onOcorrenciaRemoved(ocorrencia)
+                            ocorrenciaCallback?.onOcorrenciaRemoved(ocorrencia)
                     }
                 }
             }
     }
 
-    fun setListener(listener: Listener?) {
-        this.listener = listener
+    fun setAuthListener(listener: AuthListener?) {
+        authCallBack = listener
 
         if (listener != null && !authListenerRegistered) {
             auth.addAuthStateListener(authListener)
             authListenerRegistered = true
         }
+    }
+
+    fun setOcorrenciaListener(listener: OcorrenciaListener?) {
+        ocorrenciaCallback = listener
     }
 
     // função de register()
@@ -118,7 +121,7 @@ class FBDatabase {
                 val uid = resultado.user?.uid
 
                 if (uid == null) {
-                    listener?.onError(
+                    authCallBack?.onError(
                         Exception("Não foi possível obter o UID do usuário.")
                     )
                     return@addOnSuccessListener
@@ -133,14 +136,14 @@ class FBDatabase {
                     .document(uid)
                     .set(usuario)
                     .addOnSuccessListener {
-                        listener?.onRegisterSuccess(uid)
+                        authCallBack?.onRegisterSuccess(uid)
                     }
                     .addOnFailureListener { erro ->
-                        listener?.onError(erro)
+                        authCallBack?.onError(erro)
                     }
             }
             .addOnFailureListener { erro ->
-                listener?.onError(erro)
+                authCallBack?.onError(erro)
             }
     }
 
@@ -148,7 +151,7 @@ class FBDatabase {
     fun login(email: String, senha: String) {
         auth.signInWithEmailAndPassword(email, senha)
             .addOnFailureListener { erro ->
-                listener?.onError(erro)
+                authCallBack?.onError(erro)
             }
     }
 
@@ -160,15 +163,18 @@ class FBDatabase {
         banco.collection("ocorrencias")
             .add(novaOcorrencia)
             .addOnFailureListener { erro ->
-                listener?.onError(erro)
+                ocorrenciaCallback?.onError(erro)
             }
     }
-    fun removerOcorrencia(id: String){
-        banco.collection("ocorrencias").document(id).delete().addOnFailureListener { erro ->
-            listener?.onError(erro)
-        }
-    }
 
+    fun removerOcorrencia(id: String) {
+        banco.collection("ocorrencias")
+            .document(id)
+            .delete()
+            .addOnFailureListener { erro ->
+                ocorrenciaCallback?.onError(erro)
+            }
+    }
 
     //removendo o listener quando necessário (tipo o logout do usuário VIEWMODEL DEVE O CHAMAR, MAN)
     fun cleanup() {
@@ -176,9 +182,12 @@ class FBDatabase {
             auth.removeAuthStateListener(authListener)
             authListenerRegistered = false
         }
+
         ocorrenciasListReg?.remove()
         ocorrenciasListReg = null
-        listener = null
+
+        authCallBack = null
+        ocorrenciaCallback = null
     }
 
     //usuario deslogando
