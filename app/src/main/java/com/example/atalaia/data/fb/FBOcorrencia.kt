@@ -8,8 +8,6 @@ data class FBOcorrencia (
     var longitude: Double? = null,
     var usuarioId: String? = null,
     var tagIds: List<String>? = null)
-{}
-
 
 fun Ocorrencia.toFBOcorrencia(): FBOcorrencia {
     return FBOcorrencia(

@@ -3,8 +3,8 @@ package com.example.atalaia.data.fb
 import com.example.atalaia.domain.Tag
 
 data class FBTag(
-    val nome : String? = null,
-    val descricao : String? = null
+    var nome : String? = null,
+    var descricao : String? = null
 ) {
 
     fun Tag.toFBTag() : FBTag {

@@ -3,8 +3,8 @@ package com.example.atalaia.data.fb
 import com.example.atalaia.domain.Usuario
 
 data class FBUsuario(
-    val nome: String,
-    val email: String
+    var nome: String? = null,
+    var email: String? = null
 ) {
 
     fun Usuario.toFBUsuario(): FBUsuario{
