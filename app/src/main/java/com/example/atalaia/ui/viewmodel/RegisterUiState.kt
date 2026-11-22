@@ -1,6 +1,7 @@
 package com.example.atalaia.ui.viewmodel
 
 data class RegisterUiState(
+    val nome: String = "",
     val email: String = "",
     val senha: String = "",
     val confirmarSenha: String = "",

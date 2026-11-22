@@ -59,6 +59,17 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(
+            value = uiState.nome,
+            onValueChange = viewModel::atualizarNome,
+            label = { Text("Nome") },
+            singleLine = true,
+            enabled = !uiState.carregando,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedTextField(
             value = uiState.email,
             onValueChange = viewModel::atualizarEmail,
             label = { Text("E-mail") },

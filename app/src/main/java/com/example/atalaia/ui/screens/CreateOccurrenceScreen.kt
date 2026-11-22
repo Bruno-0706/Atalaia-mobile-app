@@ -33,12 +33,15 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.CancellationTokenSource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.atalaia.ui.viewmodel.CreateOccurrenceViewModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun CreateOccurrenceScreen(navController: NavHostController) {
 
     val context = LocalContext.current
     val createOccurrenceViewModel: CreateOccurrenceViewModel = viewModel()
+    val uiState by createOccurrenceViewModel.uiState.collectAsState()
 
     var titulo by remember { mutableStateOf("") }
     var localizacao by remember { mutableStateOf<LatLng?>(null) }
@@ -58,6 +61,19 @@ fun CreateOccurrenceScreen(navController: NavHostController) {
                         Manifest.permission.ACCESS_COARSE_LOCATION
                     ) == PackageManager.PERMISSION_GRANTED
         )
+    }
+
+    LaunchedEffect(uiState.sucesso) {
+        if (uiState.sucesso) {
+            navController.navigate(Route.Map.route) {
+                popUpTo(Route.Map.route) {
+                    inclusive = false
+                }
+                launchSingleTop = true
+            }
+
+            createOccurrenceViewModel.limparResultado()
+        }
     }
 
     val fusedLocationClient = remember(context) {
@@ -172,30 +188,35 @@ fun CreateOccurrenceScreen(navController: NavHostController) {
         }
 
         Button(
-            enabled = titulo.isNotBlank() && localizacao != null,
+            enabled = titulo.isNotBlank() &&
+                    localizacao != null &&
+                    !uiState.carregando,
             onClick = {
-                val posicao = localizacao
-
-                if (posicao != null) {
-                    val registrada = createOccurrenceViewModel.registrarOcorrencia(
+                localizacao?.let { posicao ->
+                    createOccurrenceViewModel.registrarOcorrencia(
                         titulo = titulo,
                         localizacao = posicao,
                         tags = tagsSelecionadas.toList()
                     )
-
-                    if (registrada) {
-                        navController.navigate(Route.Map.route) {
-                            popUpTo(Route.Map.route) {
-                                inclusive = false
-                            }
-                            launchSingleTop = true
-                        }
-                    }
                 }
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Registrar ocorrência")
+            Text(
+                if (uiState.carregando) {
+                    "Registrando..."
+                } else {
+                    "Registrar ocorrência"
+                }
+            )
         }
+
+        uiState.erro?.let { erro ->
+            Text(
+                text = erro,
+                color = androidx.compose.material3.MaterialTheme.colorScheme.error
+            )
+        }
+
     }
 }

@@ -1,45 +1,80 @@
 package com.example.atalaia.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.example.atalaia.data.repository.OcorrenciaRepository
-import com.example.atalaia.data.repository.UsuarioRepository
+import com.example.atalaia.data.fb.FBDatabase
 import com.example.atalaia.domain.Ocorrencia
 import com.example.atalaia.domain.Tag
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
 
+data class CreateOccurrenceUiState(
+    val carregando: Boolean = false,
+    val sucesso: Boolean = false,
+    val erro: String? = null
+)
+
 class CreateOccurrenceViewModel(
-    private val repository: OcorrenciaRepository = OcorrenciaRepository(),
-    private val usuarioRepository: UsuarioRepository = UsuarioRepository()
+    private val database: FBDatabase = FBDatabase()
 ) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(CreateOccurrenceUiState())
+    val uiState: StateFlow<CreateOccurrenceUiState> = _uiState.asStateFlow()
 
     fun registrarOcorrencia(
         titulo: String,
         localizacao: LatLng,
         tags: List<Tag>
-    ): Boolean {
+    ) {
 
         if (titulo.isBlank()) {
-            return false
+            _uiState.value = CreateOccurrenceUiState(
+                erro = "O título da ocorrência não pode estar vazio."
+            )
+            return
         }
 
-        // Obter o identificador do usuário autenticado
-        val usuarioId = usuarioRepository.usuarioAtual()?.uid
-            ?: return false
+        if (_uiState.value.carregando) return
 
-        // Gerar um identificador textual único
-        val novoId = UUID.randomUUID().toString()
+        val usuarioId = database.usuarioAtualId()
+
+        if (usuarioId == null) {
+            _uiState.value = CreateOccurrenceUiState(
+                erro = "Nenhum usuário autenticado."
+            )
+            return
+        }
 
         val novaOcorrencia = Ocorrencia(
-            id = novoId,
+            id = UUID.randomUUID().toString(),
             titulo = titulo.trim(),
             localizacao = localizacao,
             usuarioId = usuarioId,
             tagIds = tags.map { it.id }
         )
 
-        repository.adicionar(novaOcorrencia)
+        _uiState.value = CreateOccurrenceUiState(
+            carregando = true
+        )
 
-        return true
+        database.adicionarOcorrencia(
+            ocorrencia = novaOcorrencia,
+            onSuccess = {
+                _uiState.value = CreateOccurrenceUiState(
+                    sucesso = true
+                )
+            },
+            onFailure = { erro ->
+                _uiState.value = CreateOccurrenceUiState(
+                    erro = erro.message ?: "Não foi possível registrar a ocorrência."
+                )
+            }
+        )
+    }
+
+    fun limparResultado() {
+        _uiState.value = CreateOccurrenceUiState()
     }
 }
