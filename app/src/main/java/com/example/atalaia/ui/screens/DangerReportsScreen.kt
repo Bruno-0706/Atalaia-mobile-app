@@ -20,13 +20,16 @@ import androidx.navigation.NavHostController
 import com.example.atalaia.ui.components.MapButton
 import com.example.atalaia.ui.components.OcorrenciaCard
 import com.example.atalaia.ui.viewmodel.OcorrenciaViewModel
+import com.example.atalaia.ui.viewmodel.TagViewModel
 
 @Composable
 fun DangerReportsScreen(navController: NavHostController) {
 
     val ocorrenciaViewModel: OcorrenciaViewModel = viewModel()
+    val tagViewModel: TagViewModel = viewModel()
 
     val ocorrencias by ocorrenciaViewModel.ocorrencias.collectAsState()
+    val tagState by tagViewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
         ocorrenciaViewModel.carregarOcorrencias()
@@ -48,6 +51,13 @@ fun DangerReportsScreen(navController: NavHostController) {
 
         Text(text = "Registros de perigo")
 
+        if (tagState.erro != null) {
+            Text(
+                text = tagState.erro!!,
+                color = androidx.compose.material3.MaterialTheme.colorScheme.error
+            )
+        }
+
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -56,7 +66,10 @@ fun DangerReportsScreen(navController: NavHostController) {
                 items = ocorrencias,
                 key = { ocorrencia -> ocorrencia.id }
             ) { ocorrencia ->
-                OcorrenciaCard(ocorrencia)
+                OcorrenciaCard(
+                    ocorrencia = ocorrencia,
+                    tags = tagState.tags
+                )
             }
         }
     }

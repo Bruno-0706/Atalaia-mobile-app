@@ -8,6 +8,7 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
+import com.example.atalaia.domain.Tag
 
 class FBDatabase {
 
@@ -25,6 +26,11 @@ class FBDatabase {
         fun onError(exception: Exception)
     }
 
+    interface TagListener {
+        fun onTagsChanged(tags: List<Tag>)
+        fun onError(exception: Exception)
+    }
+
     private val auth = Firebase.auth
     private val banco = Firebase.firestore
 
@@ -35,6 +41,9 @@ class FBDatabase {
     private var authListener: FirebaseAuth.AuthStateListener? = null
 
     private var ocorrenciasListReg: ListenerRegistration? = null
+
+    private var tagCallback: TagListener? = null
+    private var tagsListReg: ListenerRegistration? = null
 
     // --------------------------------------------------
     // AUTENTICAÇÃO
@@ -255,11 +264,55 @@ class FBDatabase {
     }
 
     // --------------------------------------------------
+    // TAGS
+    // --------------------------------------------------
+
+    fun setTagListener(listener: TagListener?) {
+        tagCallback = listener
+
+        if (listener != null && tagsListReg == null) {
+            observarTags()
+        } else if (listener == null) {
+            removerTagListener()
+        }
+    }
+
+    private fun observarTags() {
+
+        tagsListReg = banco.collection("tags")
+            .addSnapshotListener { snapshots, erro ->
+
+                if (erro != null) {
+                    tagCallback?.onError(erro)
+                    return@addSnapshotListener
+                }
+
+                val tags = snapshots?.documents
+                    ?.mapNotNull { documento ->
+                        documento.toObject(FBTag::class.java)
+                            ?.takeIf { !it.nome.isNullOrBlank() }
+                            ?.toTag(documento.id)
+                    }
+                    ?.sortedBy { it.nome.lowercase() }
+                    ?: emptyList()
+
+                tagCallback?.onTagsChanged(tags)
+            }
+    }
+
+    fun removerTagListener() {
+        tagsListReg?.remove()
+        tagsListReg = null
+        tagCallback = null
+    }
+
+    // --------------------------------------------------
     // LIMPEZA GERAL
     // --------------------------------------------------
 
     fun cleanup() {
         removerAuthListener()
         removerOcorrenciaListener()
+        removerTagListener()
     }
 }

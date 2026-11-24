@@ -11,9 +11,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,33 +25,38 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.example.atalaia.domain.Ocorrencia
-import com.example.atalaia.domain.Tag
-import com.example.atalaia.domain.Tags
 import com.example.atalaia.ui.navigation.Route
+import com.example.atalaia.ui.viewmodel.CreateOccurrenceViewModel
+import com.example.atalaia.ui.viewmodel.TagViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.CancellationTokenSource
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.atalaia.ui.viewmodel.CreateOccurrenceViewModel
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun CreateOccurrenceScreen(navController: NavHostController) {
 
     val context = LocalContext.current
+
     val createOccurrenceViewModel: CreateOccurrenceViewModel = viewModel()
+    val tagViewModel: TagViewModel = viewModel()
+
     val uiState by createOccurrenceViewModel.uiState.collectAsState()
+    val tagState by tagViewModel.uiState.collectAsState()
 
     var titulo by remember { mutableStateOf("") }
     var localizacao by remember { mutableStateOf<LatLng?>(null) }
+
     var mensagemLocalizacao by remember {
         mutableStateOf("Localização ainda não obtida.")
     }
-    var tagsSelecionadas by remember { mutableStateOf(setOf<Tag>()) }
+
+    // Armazenamos os IDs, não os objetos Tag.
+    var tagsSelecionadas by remember {
+        mutableStateOf(setOf<String>())
+    }
 
     var temPermissao by remember(context) {
         mutableStateOf(
@@ -170,21 +178,40 @@ fun CreateOccurrenceScreen(navController: NavHostController) {
 
         Text(text = "Selecione as tags")
 
-        Tags.todas.forEach { tag ->
-            FilterChip(
-                selected = tag in tagsSelecionadas,
-                onClick = {
-                    tagsSelecionadas =
-                        if (tag in tagsSelecionadas) {
-                            tagsSelecionadas - tag
-                        } else {
-                            tagsSelecionadas + tag
+        when {
+            tagState.carregando -> {
+                Text("Carregando tags...")
+            }
+
+            tagState.erro != null -> {
+                Text(
+                    text = tagState.erro!!,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            tagState.tags.isEmpty() -> {
+                Text("Nenhuma tag disponível.")
+            }
+
+            else -> {
+                tagState.tags.forEach { tag ->
+                    FilterChip(
+                        selected = tag.id in tagsSelecionadas,
+                        onClick = {
+                            tagsSelecionadas =
+                                if (tag.id in tagsSelecionadas) {
+                                    tagsSelecionadas - tag.id
+                                } else {
+                                    tagsSelecionadas + tag.id
+                                }
+                        },
+                        label = {
+                            Text(text = tag.nome)
                         }
-                },
-                label = {
-                    Text(text = tag.nome)
+                    )
                 }
-            )
+            }
         }
 
         Button(
@@ -193,10 +220,15 @@ fun CreateOccurrenceScreen(navController: NavHostController) {
                     !uiState.carregando,
             onClick = {
                 localizacao?.let { posicao ->
+
+                    val tagsEscolhidas = tagState.tags.filter {
+                        it.id in tagsSelecionadas
+                    }
+
                     createOccurrenceViewModel.registrarOcorrencia(
                         titulo = titulo,
                         localizacao = posicao,
-                        tags = tagsSelecionadas.toList()
+                        tags = tagsEscolhidas
                     )
                 }
             },
@@ -214,9 +246,8 @@ fun CreateOccurrenceScreen(navController: NavHostController) {
         uiState.erro?.let { erro ->
             Text(
                 text = erro,
-                color = androidx.compose.material3.MaterialTheme.colorScheme.error
+                color = MaterialTheme.colorScheme.error
             )
         }
-
     }
 }

@@ -1,5 +1,7 @@
 package com.example.atalaia.domain
 
+// ME APAGUE BOY
+
 object Tags {
 
     val INFRAESTRUTURA = Tag(

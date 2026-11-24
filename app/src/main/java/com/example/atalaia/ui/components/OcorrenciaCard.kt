@@ -2,8 +2,8 @@ package com.example.atalaia.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -11,10 +11,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.atalaia.domain.Ocorrencia
-import com.example.atalaia.domain.Tags
+import com.example.atalaia.domain.Tag
 
 @Composable
-fun OcorrenciaCard(ocorrencia: Ocorrencia) {
+fun OcorrenciaCard(
+    ocorrencia: Ocorrencia,
+    tags: List<Tag>
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -36,10 +39,9 @@ fun OcorrenciaCard(ocorrencia: Ocorrencia) {
                 } ?: "Localização não informada"
             )
 
-            // Converter os IDs das tags em seus respectivos nomes
-            for (tagId in ocorrencia.tagIds) {
+            ocorrencia.tagIds.forEach { tagId ->
 
-                val tag = Tags.todas.find { it.id == tagId }
+                val tag = tags.find { it.id == tagId }
 
                 if (tag != null) {
                     Card {
